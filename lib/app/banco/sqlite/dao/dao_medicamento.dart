@@ -1,62 +1,77 @@
-import 'package:agro_pharm_application/app/dominio/medicamento.dart';
+import 'package:agro_pharm_application/app/banco/sqlite/conexao.dart';
+import 'package:agro_pharm_application/app/dominio/dto/dto_medicamento.dart';
+import 'package:agro_pharm_application/app/dominio/interface/i_dao_medicamento.dart';
 import 'package:sqflite/sqflite.dart';
 
-class MedicamentoDAO {
-  final Database db;
+class DAOMedicamento implements IDAOMedicamento {
+  late Database _db;
 
-  MedicamentoDAO(this.db);
+  final sqlInserir = '''
+    INSERT INTO medicamento (nome, quantidade, descricao, dataEntrada, dataValidade, status)
+    VALUES (?,?,?,?,?)
+  ''';
+  final sqlAlterar = '''
+    UPDATE medicamento SET nome=?, quantidade=?, descricao=?, dataEntrada=?, dataValidade=?, status=?
+    WHERE id = ?
+  ''';
+  final sqlAlterarStatus = '''
+    UPDATE medicamento SET status='I'
+    WHERE id = ?
+  ''';
+  final sqlConsultarPorId = '''
+    SELECT * FROM medicamento WHERE id = ?;
+  ''';
+  final sqlConsultar = '''
+    SELECT * FROM medicamento;
+  ''';
 
-  Future<void> criarMedicamento(Medicamento medicamento) async {
-    await db.insert('medicamento', medicamento.toMap());
+  @override
+  Future<DTOMedicamento> salvar(DTOMedicamento dto) async {
+    _db = await Conexao.iniciar();
+    int id = await _db.rawInsert(sqlInserir, [
+      dto.nome,
+      dto.quantidade,
+      dto.descricao,
+      dto.dataEntrada,
+      dto.dataValide,
+      dto.status
+    ]);
+    dto.id = id;
+    return dto;
   }
 
-  Future<Medicamento?> obterMedicamentoPorId(int id) async {
-    final List<Map<String, dynamic>> maps = await db.query(
-      'medicamento',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    if (maps.isNotEmpty) {
-      return Medicamento.fromMap(maps.first);
-    }
-    return null;
+  @override
+  Future<DTOMedicamento> alterar(DTOMedicamento dto) async {
+    _db = await Conexao.iniciar();
+    await _db.rawUpdate(sqlAlterar, [
+      dto.nome,
+      dto.quantidade,
+      dto.descricao,
+      dto.dataEntrada,
+      dto.dataValide,
+      dto.status
+    ]);
+    return dto;
   }
 
-  Future<void> atualizarMedicamento(Medicamento medicamento) async {
-    await db.update(
-      'medicamento',
-      medicamento.toMap(),
-      where: 'id = ?',
-      whereArgs: [medicamento.id],
-    );
+  @override
+  Future<DTOMedicamento> alterarStatus(int id) async {
+    _db = await Conexao.iniciar();
+    await _db.rawUpdate(sqlAlterarStatus, [id]);
+    return alterarStatus(id);
   }
 
-  Future<void> deletarMedicamento(int id) async {
-    await db.delete(
-      'medicamento',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  @override
+  Future<List<DTOMedicamento>> consultar() async {
+    _db = await Conexao.iniciar();
+    await _db.rawUpdate(sqlConsultar);
+    return consultar();
   }
 
-  Future<List<Medicamento>> listarMedicamentos() async {
-    final List<Map<String, dynamic>> maps = await db.query('medicamento');
-    return List.generate(maps.length, (i) {
-      return Medicamento.fromMap(maps[i]);
-    });
-  }
-
-  Future<List<Medicamento>> listarMedicamentosProximosVencimento() async {
-    final dataLimite = DateTime.now().add(Duration(days: 30));
-
-    final List<Map<String, dynamic>> maps = await db.query(
-      'medicamento',
-      where: 'dataValidade <= ?',
-      whereArgs: [dataLimite.toIso8601String()],
-    );
-
-    return List.generate(maps.length, (i) {
-      return Medicamento.fromMap(maps[i]);
-    });
+  @override
+  Future<DTOMedicamento> consultarPorId(int id) async {
+    _db = await Conexao.iniciar();
+    await _db.rawUpdate(sqlConsultarPorId, [id]);
+    return consultarPorId(id);
   }
 }
