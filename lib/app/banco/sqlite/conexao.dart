@@ -7,16 +7,11 @@ class Conexao {
 
   static Future<Database> iniciar() async {
     var path = join(await getDatabasesPath(), 'banco.db');
-
-    _db = await openDatabase(path, version: 1, onCreate: (db, version) async {
-      for (String sql in criarTabelas) {
-        await db.execute(sql);
-      }
-      for (String sql in insercoes) {
-        await db.execute(sql);
-      }
-    });
-
+    deleteDatabase(path);
+    _db = await openDatabase(path, version: 1, onCreate: (db, version) {
+      criarTabelas.forEach(db.execute);
+      insercoes.forEach(db.execute);
+    }, singleInstance: true);
     return _db;
   }
 }

@@ -1,23 +1,18 @@
-class MedicamentoDTO {
-  final dynamic id;
+class DTOMedicamento {
+  dynamic id;
   final String nome;
-  final String lote;
-  final double quantidade;
-  final String unidadeMedida;
-  final String categoria;
-  final String dataValidade;
-  final String fabricante;
-  final double preco;
+  final int quantidade;
+  final String descricao;
+  final DateTime dataEntrada;
+  final DateTime dataValide;
+  final String status;
 
-  MedicamentoDTO({
-    this.id,
-    required this.nome,
-    required this.lote,
-    required this.quantidade,
-    required this.unidadeMedida,
-    required this.categoria,
-    required this.dataValidade,
-    required this.fabricante,
-    required this.preco,
-  });
+  DTOMedicamento(
+      {this.id,
+      required this.nome,
+      required this.quantidade,
+      required this.descricao,
+      required this.dataEntrada,
+      required this.dataValide,
+      this.status = 'A'});
 }
